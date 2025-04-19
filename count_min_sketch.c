@@ -1,0 +1,131 @@
+#include <stdio.h>
+#include <stdint.h>
+#include <stdlib.h>
+#include <stdbool.h>
+#include <assert.h>
+#include <string.h>
+#include <math.h>
+#include "sketch.h"
+#include "sc_min_heap.h"
+#include "count_min_sketch.h"
+#include "hashutil.h"
+
+CountMinSketch* cms_init(u64 N, double phi) {
+  CountMinSketch* sketch = (CountMinSketch*)malloc(sizeof(CountMinSketch));
+  if (!sketch) {
+    fprintf(stderr, "Unable to allocate memory for sketch");
+    exit(1);
+  }
+  sketch->k = 52; // TODO: find some mathematical bound.
+  // sketch->k = (u64)(pow(N, 0.7)) + 10; // TODO: find some mathematical bound.
+  printf("k: %ld\n", sketch->k);
+
+  for (u64 i = 0; i < NUM_HASH_FUNCTIONS; ++i) sketch->m[i] = i + START_SEED;
+
+  memset(sketch->slots, 0 , sizeof(sketch->slots));
+
+  sketch->heap = (struct sc_heap*)malloc(sizeof(struct sc_heap));
+  sc_heap_init(sketch->heap, sketch->k);
+  return sketch;
+}
+
+bool cms_add(CountMinSketch* sketch, u64 item) {
+  for (size_t i = 0 ; i < NUM_HASH_FUNCTIONS; ++i) {
+    u64 index = MurmurHash64A(&item, sizeof(u64), sketch->m[i]) % NUM_BUCKETS;
+    // printf("Key: %ld Seed: %ld Index: %ld\n", item, sketch->m[i], index);
+    if(index > NUM_BUCKETS) {
+      fprintf(stderr, "Couldn't add item to count sketch\n");
+      return false;
+    }
+    sketch->slots[i][index] += 1;
+  }
+
+  u64 count = cms_estimate(sketch, item);
+
+  // Add the count regardless if heap has space.
+  if (sc_heap_size(sketch->heap) <= sketch->k) {
+    sc_heap_add(sketch->heap, count, item);
+  } else { // add item to heap if count of item is greater than heap's min.
+    struct sc_heap_data *top = sc_heap_peek(sketch->heap);
+    if (top == NULL) return false;
+    if (count > top->key) {
+      sc_heap_pop(sketch->heap);
+      sc_heap_add(sketch->heap, count, item);
+    }
+  }
+  return true;
+}
+
+struct sc_heap* cms_get_topk(CountMinSketch* sketch) {
+  return sketch->heap;
+}
+
+u64 cms_estimate(CountMinSketch* sketch, u64 item) {
+  u64 min = 1ULL << 63; //TODO: try 64
+  for (size_t i = 0 ; i < NUM_HASH_FUNCTIONS; ++i) {
+    u64 index = MurmurHash64A(&item, sizeof(u64), sketch->m[i]) % NUM_BUCKETS;
+    if(index > NUM_BUCKETS) {
+      fprintf(stderr, "Couldn't estimate item count\n");
+      return false;
+    }
+    min = MIN(min, sketch->slots[i][index]);
+  }
+
+  return min;
+}
+
+void cms_free(CountMinSketch* sketch) {
+  sc_heap_term(sketch->heap);
+  free(sketch);
+}
+
+void cms_print_sketch_table(CountMinSketch* sketch) {
+  for (size_t i = 0; i < NUM_HASH_FUNCTIONS ; ++i) {
+    for (size_t j = 0; j < NUM_BUCKETS; ++j)
+      printf("%ld    " , sketch->slots[i][j]);
+    printf("\n");
+  }
+}
+
+u64 cms_size(CountMinSketch* sketch) {
+  u64 base = sizeof(*sketch);
+  base += sketch->k * sizeof(struct sc_heap_data);
+  return base;
+}
+
+// int main(int argc, char** argv) {
+//   if (argc != 3) {
+//     fprintf(stderr, "Usage: ./sketch N PHI\n");
+//     exit(1);
+//   }
+//
+//   u64 n = atoll(argv[1]);
+//   double phi = atof(argv[2]);
+//   printf("PHI: %f\n", phi);
+//   CountMinSketch *sketch = cms_init(n, phi);
+//   u64 start = START_SEED;
+//
+//   for (size_t i = 0; i < n; ++i) {
+//     cms_add(sketch, i*START_SEED*START_SEED);
+//   }
+//   printf("\n\n");
+//   for (size_t i = 0; i < n; ++i) {
+//     cms_estimate(sketch, START_SEED*START_SEED);
+//   }
+//
+//   u64 hh[10] = {0};
+//   u64 numh = cms_heavy_hitters(sketch, phi*n, hh, 10);
+//   printf("Heavy hitters: \n");
+//   for (size_t i = 0; i < numh; ++i) {
+//     printf("%ld ",hh[i]);
+//   }
+//   printf("\n");
+//
+//   cms_print_sketch_table(sketch);
+//
+//   printf("Size in bytes: %ld\n", cms_size(sketch));
+//
+//   cms_free(sketch);
+//
+//   return 0;
+// }
