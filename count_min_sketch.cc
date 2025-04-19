@@ -5,8 +5,8 @@
 #include <assert.h>
 #include <string.h>
 #include <math.h>
+#include "min_heap.h"
 #include "sketch.h"
-#include "sc_min_heap.h"
 #include "count_min_sketch.h"
 #include "hashutil.h"
 
@@ -24,8 +24,7 @@ CountMinSketch* cms_init(u64 N, double phi) {
 
   memset(sketch->slots, 0 , sizeof(sketch->slots));
 
-  sketch->heap = (struct sc_heap*)malloc(sizeof(struct sc_heap));
-  sc_heap_init(sketch->heap, sketch->k);
+  sketch->heap = new MinHeap(sketch->k);
   return sketch;
 }
 
@@ -41,23 +40,8 @@ bool cms_add(CountMinSketch* sketch, u64 item) {
   }
 
   u64 count = cms_estimate(sketch, item);
-
-  // Add the count regardless if heap has space.
-  if (sc_heap_size(sketch->heap) <= sketch->k) {
-    sc_heap_add(sketch->heap, count, item);
-  } else { // add item to heap if count of item is greater than heap's min.
-    struct sc_heap_data *top = sc_heap_peek(sketch->heap);
-    if (top == NULL) return false;
-    if (count > top->key) {
-      sc_heap_pop(sketch->heap);
-      sc_heap_add(sketch->heap, count, item);
-    }
-  }
+  sketch->heap->insertOrUpdate(item, count);
   return true;
-}
-
-struct sc_heap* cms_get_topk(CountMinSketch* sketch) {
-  return sketch->heap;
 }
 
 u64 cms_estimate(CountMinSketch* sketch, u64 item) {
@@ -75,7 +59,7 @@ u64 cms_estimate(CountMinSketch* sketch, u64 item) {
 }
 
 void cms_free(CountMinSketch* sketch) {
-  sc_heap_term(sketch->heap);
+  delete sketch->heap;
   free(sketch);
 }
 
@@ -89,7 +73,8 @@ void cms_print_sketch_table(CountMinSketch* sketch) {
 
 u64 cms_size(CountMinSketch* sketch) {
   u64 base = sizeof(*sketch);
-  base += sketch->k * sizeof(struct sc_heap_data);
+  printf("Size of Sketch without heap: %ld\n", base);
+  base += sketch->heap->size();
   return base;
 }
 

@@ -7,6 +7,7 @@
 #include <stdlib.h>
 #include "count_sketch.h"
 #include "hashutil.h"
+#include "min_heap.h"
 
 CountSketch* cs_init(u64 N, double phi) {
   CountSketch *cs = (CountSketch*) malloc(sizeof(CountSketch));
@@ -18,8 +19,7 @@ CountSketch* cs_init(u64 N, double phi) {
 
   cs->k = 52;
   memset(cs->slots, 0, sizeof(cs->slots));
-  cs->heap = new std::vector<HeapItem*>();
-  cs->map = new std::unordered_map<u64, HeapItem*>(cs->k);
+  cs->heap = new MinHeap(cs->k);
   return cs;
 }
 
@@ -37,12 +37,6 @@ void cs_hash(HashPair* pair, u64 item, size_t *bucket, i64 *sign) {
   }
 }
 
-bool cs_heap_compare(const HeapItem* a, const HeapItem* b) {
-  if(a == NULL) return false;
-  if(b == NULL) return true;
-  return a->count > b->count;
-}
-
 bool cs_add(CountSketch* sketch, u64 item) {
   size_t bucket;
   i64 sign = 1;
@@ -55,42 +49,7 @@ bool cs_add(CountSketch* sketch, u64 item) {
     sketch->slots[i][bucket] += sign;
   }
   u64 count = cs_estimate(sketch, item);
-  if (!count) return false;
-  if (sketch->heap->size() <= sketch->k) {
-    if (auto it = sketch->map->find(item); it != sketch->map->end()){
-      // the item already exists, we need to increment counter and reheapify
-      HeapItem *existingItem = (it->second);
-      existingItem->count++;
-      std::make_heap(sketch->heap->begin(), sketch->heap->end(), cs_heap_compare);
-    } else {
-      HeapItem* newItem = (HeapItem*)malloc(sizeof(HeapItem));
-      newItem->count = count;
-      newItem->key = item;
-      (*sketch->map)[item] = newItem; // put it into map
-      sketch->heap->push_back(newItem); // push and heapify the element
-      std::push_heap(sketch->heap->begin(), sketch->heap->end(), cs_heap_compare);
-    }
-  } else {
-    HeapItem* smallest = *(sketch->heap->begin());
-    if (smallest == NULL) return false;
-    if (count > smallest->count) {
-      // we need to pop the top, remove it from map, free it, and push the new
-      // item into heap and map.
-      std::pop_heap(sketch->heap->begin(), sketch->heap->end(), cs_heap_compare);
-      smallest = sketch->heap->back();
-      sketch->heap->pop_back();
-
-      sketch->map->erase(smallest->key); //TODO: may not work.
-
-      // We could have freed and malloced, but I'm just going to reuse.
-      smallest->count = count;
-      smallest->key = item;
-
-      sketch->heap->push_back(smallest); // push and heapify the element
-      std::push_heap(sketch->heap->begin(), sketch->heap->end(), cs_heap_compare);
-      (*sketch->map)[item] = smallest; // put it into map
-    }
-  }
+  sketch->heap->insertOrUpdate(item, count);
   return true;
 }
 
@@ -134,20 +93,14 @@ u64 cs_estimate(CountSketch* sketch, u64 item) {
   return 0;
 }
 
-// CountSketch* mg_get_topk(CountSketch* sketch);
-
 void cs_free(CountSketch* sketch) {
-  // TODO: we should free each item in the heap
   delete sketch->heap;
-  delete sketch->map;
   free(sketch);
 }
 
-// void mg_print_sketch_table(CountSketch* sketch);
-
 u64 cs_size(CountSketch* sketch) {
   u64 base = sizeof(CountSketch);
-  // return base + (sizeof(u64) * 2  sketch->slots->size());
-  // TODO: fix size here
+  printf("Size of Sketch without heap: %ld\n", base);
+  base += sketch->heap->size();
   return base;
 }

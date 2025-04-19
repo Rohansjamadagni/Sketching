@@ -1,3 +1,4 @@
+#include "min_heap.h"
 #include <stdint.h>
 #include <unordered_map>
 #include <vector>
@@ -7,7 +8,7 @@
 
 #define START_SEED 1337
 #define NUM_HASH_FUNCTION_PAIRS 5 // Must be odd for easy median calculation
-#define CS_NUM_BUCKETS 10000
+#define CS_NUM_BUCKETS 1000
 #define u64 uint64_t
 #define i64 int64_t
 
@@ -19,16 +20,10 @@ typedef struct {
 } HashPair;
 
 typedef struct {
-  u64 count;
-  u64 key;
-} HeapItem;
-
-typedef struct {
   HashPair seeds[NUM_HASH_FUNCTION_PAIRS];
   u64 k;
   i64 slots[NUM_HASH_FUNCTION_PAIRS][CS_NUM_BUCKETS];
-  std::vector<HeapItem*> *heap;
-  std::unordered_map<u64, HeapItem*> *map;
+  MinHeap* heap;
 } CountSketch;
 
 CountSketch* cs_init(u64 N, double phi);

@@ -1,9 +1,10 @@
 #include "count_min_sketch.h"
-#include "sc_min_heap.h"
+#include "min_heap.h"
 #include "count_sketch.h"
 #include <cstdio>
 #include <functional>
 #include <map>
+#include <vector>
 #include "sketch.h"
 #include "uthash.h"
 #include "misra_gries.h"
@@ -45,28 +46,26 @@ u64 Sketch::Size() {
 
 std::multimap<u64, u64, std::greater<u64>> Sketch::HeavyHitters(double phi) {
   // u64 phin = static_cast<u64>(phi * (double)N);
-  struct sc_heap* min_heap;
   std::multimap<u64, u64, std::greater<u64>> topK;
   switch(type) {
     case SketchType::CMS: {
-                            min_heap =  cms_get_topk(static_cast<CountMinSketch*>(backend));
-                            struct sc_ht_entry* ht = min_heap->ht;
-                            sc_ht_entry *current, *tmp;
-                            HASH_ITER(hh, ht, current, tmp) {
-                                topK.insert({
-                                    min_heap->elems[current->heap_index].key, // Count
-                                    current->data, // Value
-                                    });
-                            }
+                           CountMinSketch *cms = static_cast<CountMinSketch*>(backend);
+                           std::vector<HeapElement> items = cms->heap->getTopK();
+                           for (size_t i = 0; i < items.size(); ++i) {
+                             topK.insert({
+                                    items.at(i).count,
+                                    items.at(i).item
+                                 });
+                           }
                             break;
                           }
     case SketchType::CS: {
                            CountSketch *cs = static_cast<CountSketch*>(backend);
-                           for (size_t i = 0; i < cs->heap->size(); ++i) {
-                             if (cs->heap->at(i) == NULL) continue;
+                           std::vector<HeapElement> items = cs->heap->getTopK();
+                           for (size_t i = 0; i < items.size(); ++i) {
                              topK.insert({
-                                    cs->heap->at(i)->count,
-                                    cs->heap->at(i)->key
+                                    items.at(i).count,
+                                    items.at(i).item
                                  });
                            }
                           break;

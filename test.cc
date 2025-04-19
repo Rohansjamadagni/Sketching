@@ -1,6 +1,7 @@
 // Author: Prashant Pandey <prashant.pandey@utah.edu>
 // For use in CS6968 & CS5968
 
+#include <cstring>
 #include <iostream>
 #include <cassert>
 #include <chrono>
@@ -28,6 +29,20 @@ int main(int argc, char** argv)
 	}
 	uint64_t N = atoi(argv[1]);
 	double phi = atof(argv[2]);
+  SketchType sketch_type = SketchType::MG;
+
+  if (argc == 4) {
+    if (strncmp(argv[3], "cms", 2) == 0) {
+      std::cout << "Sketch Type: Count Min Sketch\n";
+      sketch_type = SketchType::CMS;
+    } else if (strncmp(argv[3], "cs", 2) == 0) {
+      std::cout << "Sketch Type: Count Sketch\n";
+      sketch_type = SketchType::CS;
+    } else {
+      std::cout << "Sketch Type: Misra Gries\n";
+      sketch_type = SketchType::MG;
+    }
+  }
 	uint64_t *numbers = (uint64_t *)malloc(N * sizeof(uint64_t));
 	if(!numbers) {
 		std::cerr << "Malloc numbers failed.\n";
@@ -78,7 +93,7 @@ int main(int argc, char** argv)
 
 	// free(map);
 
-	Sketch s = Sketch(N, phi, SketchType::CS);
+	Sketch s = Sketch(N, phi, sketch_type);
 
 	t1 = high_resolution_clock::now();
 	for (uint64_t i = 0; i < N; ++i) {
@@ -122,6 +137,7 @@ int main(int argc, char** argv)
 
 	double precision = tp / (tp + fp), recall = tp / (tp + fn);
 
+  printf("Size of Sketch in Bytes: %ld\n", s.Size());
   printf("precision: %0.02f percent\nrecall: %0.02f percent\n", precision*100, recall*100);
 
 	return 0;

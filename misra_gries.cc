@@ -39,14 +39,10 @@ u64 mg_estimate(MisraGries* sketch, u64 item) {
   return 0;
 }
 
-// MisraGries* mg_get_topk(MisraGries* sketch);
-
 void mg_free(MisraGries* sketch) {
   delete sketch->map;
   free(sketch);
 }
-
-// void mg_print_sketch_table(MisraGries* sketch);
 
 u64 mg_size(MisraGries* sketch) {
   u64 base = sizeof(MisraGries);
