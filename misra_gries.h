@@ -4,14 +4,19 @@
 #ifndef _MG_H_
 #define _MG_H_
 
-#define START_SEED 1337
+#define START_SEED 42069
 #define u64 uint64_t
+
+#ifndef MG_MULT_FACTOR
+#define MG_MULT_FACTOR 50
+#endif
 
 #define MIN(X, Y) X < Y ? X : Y
 
 typedef struct {
   std::unordered_map<u64, u64> *map;
   u64 k;
+  u64 k2;
 } MisraGries;
 
 MisraGries* mg_init(u64 N, double phi);

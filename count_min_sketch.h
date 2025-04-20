@@ -4,9 +4,15 @@
 #ifndef _CMS_H_
 #define _CMS_H_
 
+#ifndef NUM_HASH_FUNCTIONS
 #define NUM_HASH_FUNCTIONS 5
-#define NUM_BUCKETS 500
-#define START_SEED 1337
+#endif
+
+#ifndef NUM_BUCKETS
+#define NUM_BUCKETS 2048
+#endif
+
+#define START_SEED 42069
 #define HEAP_START_CAP NUM_BUCKETS
 #define u64 uint64_t
 

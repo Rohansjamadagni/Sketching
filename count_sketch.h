@@ -6,9 +6,16 @@
 #ifndef _CS_H_
 #define _CS_H_
 
-#define START_SEED 1337
+#define START_SEED 42069
+
+#ifndef NUM_HASH_FUNCTION_PAIRS
 #define NUM_HASH_FUNCTION_PAIRS 5 // Must be odd for easy median calculation
-#define CS_NUM_BUCKETS 1000
+#endif
+
+#ifndef CS_NUM_BUCKETS
+#define CS_NUM_BUCKETS 2048
+#endif
+
 #define u64 uint64_t
 #define i64 int64_t
 

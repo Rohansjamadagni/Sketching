@@ -1,6 +1,7 @@
 #include "count_min_sketch.h"
 #include "min_heap.h"
 #include "count_sketch.h"
+#include <algorithm>
 #include <cstdio>
 #include <functional>
 #include <map>
@@ -72,10 +73,18 @@ std::multimap<u64, u64, std::greater<u64>> Sketch::HeavyHitters(double phi) {
                          }
     case SketchType::MG: {
                            MisraGries *mg = static_cast<MisraGries*>(backend);
-                           for (auto it = mg->map->begin(); it != mg->map->end(); ++it) {
+                           std::vector<std::pair<u64, u64>> pairs;
+                           for (const auto& pair : *mg->map) {
+                             pairs.push_back(pair);
+                           }
+
+                           std::sort(pairs.begin(), pairs.end(), [](const auto& a, const auto& b) {
+                             return a.second > b.second;
+                           });
+                           for (size_t i = 0; i < mg->k; ++i) {
                              topK.insert({
-                                    it->second,
-                                    it->first,
+                                    pairs.at(i).second,
+                                    pairs.at(i).first,
                                  });
                            }
                            break;

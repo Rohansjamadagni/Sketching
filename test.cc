@@ -8,6 +8,7 @@
 #include <openssl/rand.h>
 #include <map>
 #include <unordered_map>
+#include <math.h>
 
 #include "zipf.h"
 #include "sketch.h"
@@ -16,6 +17,7 @@ using namespace std::chrono;
 
 #define UNIVERSE 1ULL << 30
 #define EXP 1.5
+#define COUNT_ERROR_THRESHOLD 0.05
 
 double elapsed(high_resolution_clock::time_point t1, high_resolution_clock::time_point t2) {
 	return (duration_cast<duration<double> >(t2 - t1)).count();
@@ -108,37 +110,44 @@ int main(int argc, char** argv)
 	t2 = high_resolution_clock::now();
 	std::cout << "Time to compute phi heavy hitters: " << elapsed(t1, t2) << " secs\n";
 
-	auto iterator1 = topK.begin();
-	auto iterator2 = sketch_topK.begin();
+    std::unordered_map<uint64_t, uint64_t> true_counts;
+    for (const auto& pair : topK) {
+        true_counts[pair.second] = pair.first;  // element -> true count
+    }
 
-	double tp = 0, fp = 0, fn = 0;
+    std::unordered_map<uint64_t, uint64_t> estimated_counts;
+    for (const auto& pair : sketch_topK) {
+        estimated_counts[pair.second] = pair.first;  // element -> estimated count
+    }
 
-	while (iterator1 != topK.end() && iterator2 != sketch_topK.end()) {
-		if (iterator1->second == iterator2->second) {
-			tp++;
-			iterator1++;
-			iterator2++;
-		} else if (iterator1->first > iterator2->first) {
-			fn++;
-			iterator1++;
-		} else if (iterator1->first < iterator2->first) {
-			fp++;
-			iterator2++;
-		} else {
-			if (sketch_topK.find(iterator1->second) != sketch_topK.end()) {
-				tp++;
-				iterator1++;
-			} else {
-				fn++;
-				iterator1++;
-			}
-		}
-	}
+    double tp = 0, fp = 0, fn = 0;
 
-	double precision = tp / (tp + fp), recall = tp / (tp + fn);
+    // Calculate True Positives (matching elements with count error < threshold)
+    for (const auto& [element, est_count] : estimated_counts) {
+        if (true_counts.count(element)) {
+            uint64_t true_count = true_counts[element];
+            double error = std::abs((double)est_count - (double)true_count) / true_count;
+            if (error <= COUNT_ERROR_THRESHOLD) {
+                tp++;
+            }
+        }
+    }
 
-  printf("Size of Sketch in Bytes: %ld\n", s.Size());
-  printf("precision: %0.02f percent\nrecall: %0.02f percent\n", precision*100, recall*100);
+    // False Positives = total estimated - TP
+    fp = estimated_counts.size() - tp;
+
+    // False Negatives = total true - TP
+    fn = true_counts.size() - tp;
+
+    double precision = tp / (tp + fp);
+    double recall = tp / (tp + fn);
+
+    printf("True Positives: %f\t False Positives: %f\t"
+           "False Negatives: %f\n", tp, fp, fn);
+
+    printf("Size of Sketch in Bytes: %ld\n", s.Size());
+    printf("precision: %0.02f percent\n", precision*100);
+    printf("recall: %0.02f percent\n", recall*100);
 
 	return 0;
 }

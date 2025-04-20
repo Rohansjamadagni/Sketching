@@ -1,9 +1,10 @@
 all: test
 
 CC = g++
-OPT= -ggdb -flto -Ofast
+OPT= -ggdb -flto -Ofast -mavx
+COPT =
 # OPT= -ggdb -flto
-CFLAGS = $(OPT) -Wall -fpermissive
+CFLAGS = $(OPT) -Wall -fpermissive $(COPT)
 LIBS = -lssl -lcrypto
 
 test: test.cc sketch.cc zipf.c hashutil.c count_min_sketch.cc \

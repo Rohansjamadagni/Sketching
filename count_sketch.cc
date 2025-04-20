@@ -2,22 +2,31 @@
 #include <cstdlib>
 #include <cstring>
 #include <limits>
+#include <random>
 #include <stdio.h>
 #include <stdbool.h>
 #include <stdlib.h>
+#include <math.h>
 #include "count_sketch.h"
 #include "hashutil.h"
 #include "min_heap.h"
 
+#define ZETA_1_5 2.6123
+
 CountSketch* cs_init(u64 N, double phi) {
   CountSketch *cs = (CountSketch*) malloc(sizeof(CountSketch));
-  u64 start_seed = START_SEED;
+  std::random_device rd;
   for (size_t i = 0; i < NUM_HASH_FUNCTION_PAIRS; ++i) {
-    cs->seeds[i].seed_main = start_seed++;
-    cs->seeds[i].seed_sign = start_seed++;
+    cs->seeds[i].seed_main = rd();
+    cs->seeds[i].seed_sign = rd();
   }
 
-  cs->k = 52;
+  // K value is caluclated based on the reinmann's zeta function zeta(1.5), which
+  // is our zipfian parameter is equal to 2.6123, we assume the universe size is
+  // large here >> 10^5.
+  cs->k = (u64) ceil(pow( 1.0 / (phi * ZETA_1_5), 2.0/3.0));
+  printf("estimated k: %ld\n", cs->k);
+
   memset(cs->slots, 0, sizeof(cs->slots));
   cs->heap = new MinHeap(cs->k);
   return cs;
@@ -83,7 +92,8 @@ u64 cs_estimate(CountSketch* sketch, u64 item) {
     }
     counts[i] = sketch->slots[i][bucket];
   }
-  qsort(counts, NUM_HASH_FUNCTION_PAIRS, sizeof(u64*), cs_i64_compare);
+  std::nth_element(counts, counts + NUM_HASH_FUNCTION_PAIRS/2,
+                   counts + NUM_HASH_FUNCTION_PAIRS);
 
   i64 median = counts[NUM_HASH_FUNCTION_PAIRS/2];
   if (median > 0){

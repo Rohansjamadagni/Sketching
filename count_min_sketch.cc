@@ -10,15 +10,23 @@
 #include "count_min_sketch.h"
 #include "hashutil.h"
 
+#define ZETA_1_5 2.6123
+
 CountMinSketch* cms_init(u64 N, double phi) {
   CountMinSketch* sketch = (CountMinSketch*)malloc(sizeof(CountMinSketch));
   if (!sketch) {
     fprintf(stderr, "Unable to allocate memory for sketch");
     exit(1);
   }
-  sketch->k = 52; // TODO: find some mathematical bound.
-  // sketch->k = (u64)(pow(N, 0.7)) + 10; // TODO: find some mathematical bound.
-  printf("k: %ld\n", sketch->k);
+  if (phi == 0.0) {
+    fprintf(stderr, "Phi value can not be zero");
+    exit(1);
+  }
+  // K value is caluclated based on the reinmann's zeta function zeta(1.5), which
+  // is our zipfian parameter is equal to 2.6123, we assume the universe size is
+  // large here >> 10^5.
+  sketch->k = (u64) ceil(pow( 1.0 / (phi * ZETA_1_5), 2.0/3.0));
+  printf("estimated k: %ld\n", sketch->k);
 
   for (u64 i = 0; i < NUM_HASH_FUNCTIONS; ++i) sketch->m[i] = i + START_SEED;
 
