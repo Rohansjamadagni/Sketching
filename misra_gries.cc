@@ -11,7 +11,7 @@ MisraGries* mg_init(u64 N, double phi) {
   // K value is caluclated based on the reinmann's zeta function zeta(1.5), which
   // is our zipfian parameter is equal to 2.6123, we assume the universe size is
   // large here >> 10^5.
-  mg->k = (u64) ceil(pow(1.0 / (phi * ZETA_1_5), 2.0/3.0));
+  mg->k = (u64) floor(pow(1.0 / (phi * ZETA_1_5), 2.0/3.0));
   mg->k2 = mg->k * MG_MULT_FACTOR;
   printf("estimated k: %ld\n", mg->k);
   mg->map = new std::unordered_map<u64, u64>();

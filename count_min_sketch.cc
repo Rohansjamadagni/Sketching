@@ -25,7 +25,7 @@ CountMinSketch* cms_init(u64 N, double phi) {
   // K value is caluclated based on the reinmann's zeta function zeta(1.5), which
   // is our zipfian parameter is equal to 2.6123, we assume the universe size is
   // large here >> 10^5.
-  sketch->k = (u64) ceil(pow( 1.0 / (phi * ZETA_1_5), 2.0/3.0));
+  sketch->k = (u64) floor(pow( 1.0 / (phi * ZETA_1_5), 2.0/3.0));
   printf("estimated k: %ld\n", sketch->k);
 
   for (u64 i = 0; i < NUM_HASH_FUNCTIONS; ++i) sketch->m[i] = i + START_SEED;
@@ -37,6 +37,7 @@ CountMinSketch* cms_init(u64 N, double phi) {
 }
 
 bool cms_add(CountMinSketch* sketch, u64 item) {
+  u64 count = UINT64_MAX;
   for (size_t i = 0 ; i < NUM_HASH_FUNCTIONS; ++i) {
     u64 index = MurmurHash64A(&item, sizeof(u64), sketch->m[i]) % NUM_BUCKETS;
     // printf("Key: %ld Seed: %ld Index: %ld\n", item, sketch->m[i], index);
@@ -45,15 +46,15 @@ bool cms_add(CountMinSketch* sketch, u64 item) {
       return false;
     }
     sketch->slots[i][index] += 1;
+    count = MIN(count, sketch->slots[i][index]);
   }
 
-  u64 count = cms_estimate(sketch, item);
   sketch->heap->insertOrUpdate(item, count);
   return true;
 }
 
 u64 cms_estimate(CountMinSketch* sketch, u64 item) {
-  u64 min = 1ULL << 63; //TODO: try 64
+  u64 min = UINT64_MAX;
   for (size_t i = 0 ; i < NUM_HASH_FUNCTIONS; ++i) {
     u64 index = MurmurHash64A(&item, sizeof(u64), sketch->m[i]) % NUM_BUCKETS;
     if(index > NUM_BUCKETS) {

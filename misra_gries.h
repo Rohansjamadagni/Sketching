@@ -8,7 +8,7 @@
 #define u64 uint64_t
 
 #ifndef MG_MULT_FACTOR
-#define MG_MULT_FACTOR 50
+#define MG_MULT_FACTOR 100
 #endif
 
 #define MIN(X, Y) X < Y ? X : Y

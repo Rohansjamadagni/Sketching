@@ -17,7 +17,7 @@ using namespace std::chrono;
 
 #define UNIVERSE 1ULL << 30
 #define EXP 1.5
-#define COUNT_ERROR_THRESHOLD 0.05
+#define COUNT_ERROR_THRESHOLD 0.01 // Error rate of 1%
 
 double elapsed(high_resolution_clock::time_point t1, high_resolution_clock::time_point t2) {
 	return (duration_cast<duration<double> >(t2 - t1)).count();
@@ -68,11 +68,11 @@ int main(int argc, char** argv)
 	uint64_t total = 0;
   uint64_t numK = 0;
 	double threshold = phi * N;
-	std::multimap<uint64_t, uint64_t, std::greater<uint64_t> > topK;
+	std::unordered_map<uint64_t, uint64_t> topK;
 	t1 = high_resolution_clock::now();
 	for (auto it = map.begin(); it != map.end(); ++it) {
 		if (it->second >= threshold) {
-			topK.insert(std::make_pair(it->second, it->first));
+			topK.insert(std::make_pair(it->first, it->second));
       numK++;
 		}
 		/*
@@ -110,22 +110,12 @@ int main(int argc, char** argv)
 	t2 = high_resolution_clock::now();
 	std::cout << "Time to compute phi heavy hitters: " << elapsed(t1, t2) << " secs\n";
 
-    std::unordered_map<uint64_t, uint64_t> true_counts;
-    for (const auto& pair : topK) {
-        true_counts[pair.second] = pair.first;  // element -> true count
-    }
-
-    std::unordered_map<uint64_t, uint64_t> estimated_counts;
-    for (const auto& pair : sketch_topK) {
-        estimated_counts[pair.second] = pair.first;  // element -> estimated count
-    }
-
     double tp = 0, fp = 0, fn = 0;
 
     // Calculate True Positives (matching elements with count error < threshold)
-    for (const auto& [element, est_count] : estimated_counts) {
-        if (true_counts.count(element)) {
-            uint64_t true_count = true_counts[element];
+    for (const auto& [element, est_count] : sketch_topK) {
+        if (topK.count(element)) {
+            uint64_t true_count = topK[element];
             double error = std::abs((double)est_count - (double)true_count) / true_count;
             if (error <= COUNT_ERROR_THRESHOLD) {
                 tp++;
@@ -134,17 +124,16 @@ int main(int argc, char** argv)
     }
 
     // False Positives = total estimated - TP
-    fp = estimated_counts.size() - tp;
+    fp = sketch_topK.size() - tp;
 
     // False Negatives = total true - TP
-    fn = true_counts.size() - tp;
+    fn = topK.size() - tp;
 
     double precision = tp / (tp + fp);
     double recall = tp / (tp + fn);
 
     printf("True Positives: %f\t False Positives: %f\t"
            "False Negatives: %f\n", tp, fp, fn);
-
     printf("Size of Sketch in Bytes: %ld\n", s.Size());
     printf("precision: %0.02f percent\n", precision*100);
     printf("recall: %0.02f percent\n", recall*100);

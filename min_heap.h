@@ -3,7 +3,7 @@
 
 #include <vector>
 #include <unordered_map>
-#include <cstdint>  // For uint64_t
+#include <cstdint>
 
 #define u64 uint64_t
 
@@ -15,10 +15,9 @@ struct HeapElement {
 class MinHeap {
 private:
     std::vector<HeapElement> heap;
-    std::unordered_map<u64, size_t> itemIndexMap;  // item -> heap index
+    std::unordered_map<u64, size_t> itemIndexMap;
     const u64 k;
 
-    // Maintain min-heap property by moving element down
     void siftDown(size_t index) {
         size_t smallest = index;
         size_t left = 2 * index + 1;
@@ -39,7 +38,6 @@ private:
         }
     }
 
-    // Maintain min-heap property by moving element up
     void siftUp(size_t index) {
         while (index > 0) {
             size_t parent = (index - 1) / 2;

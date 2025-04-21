@@ -13,7 +13,7 @@
 #endif
 
 #ifndef CS_NUM_BUCKETS
-#define CS_NUM_BUCKETS 2048
+#define CS_NUM_BUCKETS 2048 // Must be a power of two
 #endif
 
 #define u64 uint64_t

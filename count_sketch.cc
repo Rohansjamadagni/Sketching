@@ -24,7 +24,7 @@ CountSketch* cs_init(u64 N, double phi) {
   // K value is caluclated based on the reinmann's zeta function zeta(1.5), which
   // is our zipfian parameter is equal to 2.6123, we assume the universe size is
   // large here >> 10^5.
-  cs->k = (u64) ceil(pow( 1.0 / (phi * ZETA_1_5), 2.0/3.0));
+  cs->k = (u64) floor(pow( 1.0 / (phi * ZETA_1_5), 2.0/3.0));
   printf("estimated k: %ld\n", cs->k);
 
   memset(cs->slots, 0, sizeof(cs->slots));
@@ -92,6 +92,7 @@ u64 cs_estimate(CountSketch* sketch, u64 item) {
     }
     counts[i] = sketch->slots[i][bucket];
   }
+  // THis is basically a faster sort for small number of elements
   std::nth_element(counts, counts + NUM_HASH_FUNCTION_PAIRS/2,
                    counts + NUM_HASH_FUNCTION_PAIRS);
 

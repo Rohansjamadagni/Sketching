@@ -46,7 +46,6 @@ u64 Sketch::Size() {
 }
 
 std::multimap<u64, u64, std::greater<u64>> Sketch::HeavyHitters(double phi) {
-  // u64 phin = static_cast<u64>(phi * (double)N);
   std::multimap<u64, u64, std::greater<u64>> topK;
   switch(type) {
     case SketchType::CMS: {
@@ -54,8 +53,8 @@ std::multimap<u64, u64, std::greater<u64>> Sketch::HeavyHitters(double phi) {
                            std::vector<HeapElement> items = cms->heap->getTopK();
                            for (size_t i = 0; i < items.size(); ++i) {
                              topK.insert({
-                                    items.at(i).count,
-                                    items.at(i).item
+                                    items.at(i).item,
+                                    items.at(i).count
                                  });
                            }
                             break;
@@ -65,8 +64,8 @@ std::multimap<u64, u64, std::greater<u64>> Sketch::HeavyHitters(double phi) {
                            std::vector<HeapElement> items = cs->heap->getTopK();
                            for (size_t i = 0; i < items.size(); ++i) {
                              topK.insert({
-                                    items.at(i).count,
-                                    items.at(i).item
+                                    items.at(i).item,
+                                    items.at(i).count
                                  });
                            }
                           break;
@@ -83,8 +82,8 @@ std::multimap<u64, u64, std::greater<u64>> Sketch::HeavyHitters(double phi) {
                            });
                            for (size_t i = 0; i < mg->k; ++i) {
                              topK.insert({
-                                    pairs.at(i).second,
                                     pairs.at(i).first,
+                                    pairs.at(i).second,
                                  });
                            }
                            break;

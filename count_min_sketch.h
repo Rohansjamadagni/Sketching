@@ -9,7 +9,7 @@
 #endif
 
 #ifndef NUM_BUCKETS
-#define NUM_BUCKETS 2048
+#define NUM_BUCKETS 2048 // Must be power of two
 #endif
 
 #define START_SEED 42069
