@@ -173,7 +173,7 @@ Num Buckets = 2048
 Num Hash Functions = 5
 Size for MisraGries = 2600
 
-![[https://github.com/Rohansjamadagn/Sketching/blob/master/phi_sensitivity.png]]
+[[https://github.com/Rohansjamadagni/Sketching/blob/master/Assets/phi_sensitivity.png]]
 
 We see that CMS (Count Min Sketch) performs the best compared to the other two. CS (Count Sketch) results have large variance because of the nature of the algorithm and distribution. MIsra Gries although behind CMS, it performs consistently and as we'll see further, when given more memory it is on par with CMS.
 
@@ -188,11 +188,11 @@ For Count Sketch and Count Min Sketch the number of hash functions was fixed at 
 For Misra Gries, the number of buckets was k * {50, 100, 200, 400}, for this test k = 52, and therefore the total buckets were = {2600, 5200, 10400, 20800}
 
 
-![[https://github.com/Rohansjamadagn/Sketching/blob/master/memory_ananlysis.png]]
+[[https://github.com/Rohansjamadagni/Sketching/blob/master/Assets/memory_ananlysis.png]]
 
 After seeing these results I realized that I had tested Misra Gries with worse conditions so I went back and re-did the Phi tests with number of buckets = 5200 which was closer to the memory usage of Count Min Sketch and Count Sketch.
 
-![[https://github.com/Rohansjamadagn/Sketching/blob/master/phi_sensitivity_2.png]]
+![[https://github.com/Rohansjamadagni/Sketching/blob/master/Assets/phi_sensitivity_2.png]]
 
 And we can see that Misra Gries Performs in line with Count Min Sketch.
 
@@ -209,7 +209,7 @@ Num Hash Functions = 5
 Size for MisraGries = 5200
 
 
-![[https://github.com/Rohansjamadagn/Sketching/blob/master/time_analysis.png]]
+![[https://github.com/Rohansjamadagni/Sketching/blob/master/Assets/time_analysis.png]]
 
 
 We can clearly see that Count Sketch takes significantly more time averaging around 4s. Count Min sketch does better at around 1.8s. Misra Gries performs the best with a latency under a second. The red dotted line shows that the count time using std::map is much better than any of the sketching approaches. This is presumably due to optimizations and smaller number of compuatation needed to be done i.e only hashing once vs multiple times mentioned here. The hash functioned used in map is also presumably much faster than Murmur hash that is used by my implementation.
@@ -224,8 +224,8 @@ Num Buckets = 2048
 Num Hash Functions = 5
 Size for MisraGries = 5200
 
-![[https://github.com/Rohansjamadagn/Sketching/blob/master/recall_vs_update_time.png]]
-![[https://github.com/Rohansjamadagn/Sketching/blob/master/precision_vs_update_time.png]]
+![[https://github.com/Rohansjamadagni/Sketching/blob/master/Assets/recall_vs_update_time.png]]
+![[https://github.com/Rohansjamadagni/Sketching/blob/master/Assets/precision_vs_update_time.png]]
 
 These results re-iterate the information mentioned in the previous sections. The thing to note is that there are some random outliers in this case.
 
