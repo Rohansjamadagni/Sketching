@@ -7,7 +7,6 @@
 #include <map>
 #include <vector>
 #include "sketch.h"
-#include "uthash.h"
 #include "misra_gries.h"
 
 
