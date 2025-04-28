@@ -7,6 +7,10 @@
 3. `./test N PHI <cs|mg|cms>` (Default is MisraGries (mg))
 3. Run `python3 generate-plot.py` to run all the various tests and save the data.
 
+## Motivation
+
+These solutions solve the Top K heavy hitter problem in constant space. For 100M items, each algorithm consumes about ~400KB memory while a regular hashmap consumes ~5 GB.
+
 ## Report
 
 This project investigated three algorithms designed for data streams—Misra-Gries, Count-Min Sketch, and Count Sketch—to evaluate their effectiveness in identifying "heavy hitters" (high-frequency items) within large datasets. The experiments used data following a Zipfian distribution (s=1.5), simulating scenarios like word frequencies, with parameters N=100 million items and a universe size U=2³⁰. A key finding was that Misra-Gries and Count-Min Sketch significantly outperformed Count Sketch for this specific workload and achieved accuracy with a considerably lower memory footprint compared to naive hash maps.
